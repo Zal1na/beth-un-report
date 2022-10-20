@@ -1,2 +1,3 @@
 This is my very special project page. I am going to do and record so many vip things.
 
+Now we've learned (or "learned") how to use the Unix Shell and created a git repo
