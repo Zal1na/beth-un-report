@@ -61,10 +61,106 @@ gapminder_data_2007 <- read_csv("data/gapminder_data.csv") %>%
   select(-year, -continent)
 
 
-gapminder_data_2007
+# data cleaning
+
+read_csv("data/co2-un-data.csv")
+# first row does not contain headers; messy. Easiest to get rid of first
+# two rows and then rename all of the columns
+
+read_csv("data/co2-un-data.csv", skip = 2,
+         col_names = c("region", "country", "year",
+                       "series", "value", "footnotes", "source"))
 
 
+read_csv("data/co2-un-data.csv", skip = 1)
+# one of the columns is named "...2" which is a problem. can use rename()
 
+read_csv("data/co2-un-data.csv", skip = 1) %>%
+  rename("country" =...2)
+
+# to remove capital letters from headers:
+read_csv("data/co2-un-data.csv", skip = 1) %>%
+  rename_all(tolower)
+
+# save data to object
+
+co2_emissions_dirty <- read_csv("data/co2-un-data.csv", skip = 2,
+                                col_names = c("region", "country", "year",
+                                              "series", "value", "footnotes", "source"))
+
+#practicing select ()
+
+co2_emissions_dirty %>%
+  select(country, year, series, value)
+
+# keyboard shortcut for the pipe operator %>% is command+shift+m
+
+co2_emissions_dirty %>% 
+  select(country, year, series, value) %>% 
+  mutate(series = recode(series, "Emissions (thousand metric tons of carbon dioxide)" = "total_emissions",
+                         "Emissions per capita (metric tons of carbon dioxide)" = "per_capita_emissions")) %>% 
+  pivot_wider(names_from = series, values_from = value) %>% 
+  # number of observations per year
+  count(year)
+
+
+co2_emissions <- co2_emissions_dirty %>% 
+  select(country, year, series, value) %>% 
+  mutate(series = recode(series, "Emissions (thousand metric tons of carbon dioxide)" = "total_emissions",
+                         "Emissions per capita (metric tons of carbon dioxide)" = "per_capita_emissions")) %>% 
+  pivot_wider(names_from = series, values_from = value) %>% 
+  filter(year == 2005) %>% 
+  select(-year)
+
+
+# joining data frames
+
+# inner_join(): drops rows that don't contain both ___?
+
+df <- inner_join(gapminder_data_2007, co2_emissions)
+df
+
+# anti_join(): what are the observations that are in one but not the other?
+anti_join(gapminder_data_2007, co2_emissions, 
+          by = "country")
+
+#starting from the beginning and adding:
+
+co2_emissions <- read_csv("data/co2-un-data.csv",
+                          skip = 2,
+                          col_names = c("region", "country", "year",
+                                        "series", "value", "footnotes", "source")) %>% 
+  select(country, year, series, value) %>% 
+  mutate (series = recode(series, "Emissions (thousand metric tons of carbon dioxide)" = "total_emissions",
+                          "Emissions per capita (metric tons of carbon dioxide)" = "per_capita_emissions")) %>% 
+  pivot_wider(names_from = series, values_from = value) %>% 
+  filter(year == 2005) %>% 
+  select(-year) %>% 
+  mutate(country = recode(country,
+                          "Bolivia (Plurin, State of)" = "Bolivia",
+                          "United States of America" = "United States",
+                          "Venezuela (Boliv. Rep. of)" = "Venezuela"))
+
+# a second antijoin
+anti_join(gapminder_data_2007, co2_emissions, by = "country")
+
+gapminder_data_2007 <- read_csv("data/gapminder_data.csv") %>% 
+  filter(year == 2007 & continent == "Americas") %>% 
+  select (-year, -continent) %>% 
+  mutate(country = recode(country, "Puerto Rico" = "United States")) %>% 
+  group_by(country) %>% 
+  summarise(lifeExp = sum(lifeExp * pop) / sum(pop),
+            gdpPercap = sum(gdpPercap * pop) / sum(pop), 
+            pop = sum(pop))
+
+gapminder_co2 <- inner_join(gapminder_data_2007, co2_emissions, by = "country")
+
+gapminder_co2 %>% 
+  mutate(region = if_else(country == "Canada" | 
+                            country == "United States" | 
+                            country == "Mexico", "north", "south"))
+
+write_csv(gapminder_co2, "data/gapminder_co2.csv")
 
 
 
