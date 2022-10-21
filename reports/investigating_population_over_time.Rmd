@@ -8,3 +8,22 @@ date: "2022-10-21"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r packages}
+library(tidyverse)
+```
+
+```{r plot}
+gapminder_data <- read_csv("../data/gapminder_data.csv")
+gapminder_Asia <- gapminder_data %>% 
+  filter(continent == "Asia")
+
+gapminder_Asia %>% 
+  filter(year == 1972) %>% 
+  arrange(desc(pop))
+
+ggplot(gapminder_Asia, aes(x = year, 
+                           y=pop, color = country)) +
+  geom_point() +
+  facet_wrap(vars(column_name = continent))
+  
+```
